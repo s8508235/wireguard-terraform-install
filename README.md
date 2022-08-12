@@ -4,7 +4,7 @@ Before you can use the Terraform module in this repository out of the box, you n
 
  - an [AWS account](https://portal.aws.amazon.com/gp/aws/developer/registration/index.html)
  - a [Terraform](https://www.terraform.io/intro/getting-started/install.html) CLI
-
+ - [Wireguard](https://www.wireguard.com/install/)
 Moreover, you probably had enough of people snooping on you and want some privacy back or just prefer to have a long lived static IP.
 
 ## Setup
