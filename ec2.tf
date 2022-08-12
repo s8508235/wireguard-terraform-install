@@ -24,20 +24,57 @@ data "aws_ami" "amazon_linux_2" {
   owners = ["amazon"]
 }
 
-resource "aws_key_pair" "openvpn" {
+data "template_file" "remote-config" {
+  template = file("${path.module}/templates/remote-config.tpl")
+
+  vars = {
+    private_key         = file(var.remote_wireguard_private_key_file)
+    dns                 = var.dns
+    wg_server_net       = var.wireguard_remote_ip_subnet
+    wg_server_port      = var.remote_wireguard_port
+    peer                = data.template_file.wg_client_data_json.rendered
+    wg_server_interface = var.wireguard_server_interface
+  }
+}
+data "template_file" "wg_client_data_json" {
+  template = file("${path.module}/templates/client-data.tpl")
+
+  vars = {
+    client_pub_key = file(var.local_wireguard_public_key_file)
+    wg_subnet      = var.wireguard_ip_subnet
+    client_ip      = cidrhost(local.local_ip_address, 0)
+    client_port    = var.local_wireguard_port
+  }
+}
+
+data "template_file" "local_config_file" {
+  template = file("${path.module}/templates/local-config.tpl")
+  vars = {
+    local_private_key = file(var.local_wireguard_private_key_file)
+    wg_subnet         = var.wireguard_local_ip_subnet
+    local_port        = var.local_wireguard_port
+    dns               = var.dns
+    local_gateway     = var.local_gateway
+    local_ip          = local.local_ip_address
+    remote_public_key = file(var.remote_wireguard_public_key_file)
+    remote_ip         = aws_instance.wireguard.public_ip
+    remote_port       = var.remote_wireguard_port
+  }
+}
+
+resource "aws_key_pair" "wireguard" {
   key_name   = var.ssh_private_key_file
   public_key = file("${path.module}/${var.ssh_public_key_file}")
 }
 
-resource "aws_instance" "openvpn" {
+resource "aws_instance" "wireguard" {
   ami                         = data.aws_ami.amazon_linux_2.id
   associate_public_ip_address = true
   instance_type               = var.instance_type
-  key_name                    = aws_key_pair.openvpn.key_name
-  subnet_id                   = aws_subnet.openvpn.id
-
+  key_name                    = aws_key_pair.wireguard.key_name
+  subnet_id                   = aws_subnet.wireguard.id
   vpc_security_group_ids = [
-    aws_security_group.openvpn.id,
+    aws_security_group.wireguard.id,
     aws_security_group.ssh_from_local.id,
   ]
 
@@ -53,78 +90,41 @@ resource "aws_instance" "openvpn" {
   }
 }
 
-resource "null_resource" "openvpn_bootstrap" {
+resource "null_resource" "wireguard_bootstrap" {
   connection {
     type        = "ssh"
-    host        = aws_instance.openvpn.public_ip
+    host        = aws_instance.wireguard.public_ip
     user        = var.ec2_username
     port        = "22"
     private_key = file("${path.module}/${var.ssh_private_key_file}")
     agent       = false
   }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo yum update -y",
-      "curl -O ${var.openvpn_install_script_location}",
-      "chmod +x openvpn-install.sh",
-      <<EOT
-      sudo AUTO_INSTALL=y \
-           APPROVE_IP=${aws_instance.openvpn.public_ip} \
-           ENDPOINT=${aws_instance.openvpn.public_dns} \
-           ./openvpn-install.sh
-      
-EOT
-      ,
-    ]
-  }
-}
-
-resource "null_resource" "openvpn_update_users_script" {
-  depends_on = [null_resource.openvpn_bootstrap]
-
-  triggers = {
-    ovpn_users = join(" ", var.ovpn_users)
-  }
-
-  connection {
-    type        = "ssh"
-    host        = aws_instance.openvpn.public_ip
-    user        = var.ec2_username
-    port        = "22"
-    private_key = file("${path.module}/${var.ssh_private_key_file}")
-    agent       = false
+  provisioner "file" {
+    content     = local_file.wireguard_remote_file.content
+    destination = "/tmp/wg0.conf"
   }
 
   provisioner "file" {
-    source      = "${path.module}/scripts/update_users.sh"
-    destination = "/home/${var.ec2_username}/update_users.sh"
+    source      = "${path.module}/install.sh"
+    destination = "/tmp/install.sh"
   }
-
   provisioner "remote-exec" {
     inline = [
-      "chmod +x ~${var.ec2_username}/update_users.sh",
-      "sudo ~${var.ec2_username}/update_users.sh ${join(" ", var.ovpn_users)}",
+      "sudo yum update -y",
+      "sudo amazon-linux-extras install epel -y",
+      "sudo chmod +x /tmp/install.sh",
+      "sudo yum clean all -y",
+      "sudo /tmp/install.sh",
+      "sudo yum install wireguard-dkms wireguard-tools -y",
+      "sudo cp /tmp/wg0.conf /etc/wireguard/wg0.conf",
+      "sudo wg-quick up wg0",
     ]
   }
 }
 
-resource "null_resource" "openvpn_download_configurations" {
-  depends_on = [null_resource.openvpn_update_users_script]
-
-  triggers = {
-    ovpn_users = join(" ", var.ovpn_users)
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
-    mkdir -p ${var.ovpn_config_directory};
-    scp -o StrictHostKeyChecking=no \
-        -o UserKnownHostsFile=/dev/null \
-        -i ${var.ssh_private_key_file} ${var.ec2_username}@${aws_instance.openvpn.public_ip}:/home/${var.ec2_username}/*.ovpn ${var.ovpn_config_directory}/
-    
-EOT
-
-  }
+resource "local_file" "wireguard_local_file" {
+  depends_on      = [null_resource.wireguard_bootstrap]
+  content         = data.template_file.local_config_file.rendered
+  filename        = "${path.module}/${var.wiregaurd_config_name}"
+  file_permission = "0400"
 }
-

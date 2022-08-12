@@ -13,11 +13,11 @@ variable "profile" {
 
 variable "tag_name" {
   description = "The name to tag AWS resources with"
-  default     = "OpenVPN"
+  default     = "Wiregaurd"
 }
 
 variable "cidr_block" {
-  description = "The CIDR block range to use for the OpenVPN VPC"
+  description = "The CIDR block range to use for the Wiregaurd VPC"
   default     = "10.0.0.0/16"
 }
 
@@ -36,30 +36,83 @@ variable "ec2_username" {
   default     = "ec2-user"
 }
 
-variable "openvpn_install_script_location" {
-  description = "The location of an OpenVPN installation script compatible with https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh"
-  default     = "https://raw.githubusercontent.com/dumrauf/openvpn-install/master/openvpn-install.sh"
-}
-
 variable "ssh_public_key_file" {
-  # Generate via 'ssh-keygen -f openvpn -t rsa'
+  # Generate via 'ssh-keygen -f wireguard -t rsa -b 4096'
   description = "The public SSH key to store in the EC2 instance"
-  default     = "settings/openvpn.pub"
+  default     = "settings/wireguard.pub"
 }
 
 variable "ssh_private_key_file" {
-  # Generate via 'ssh-keygen -f openvpn -t rsa'
+  # Generate via 'ssh-keygen -f wireguard -t rsa -b 4096'
   description = "The private SSH key used to connect to the EC2 instance"
-  default     = "settings/openvpn"
+  default     = "settings/wireguard"
 }
 
-variable "ovpn_users" {
-  type        = list(string)
-  description = "The list of users to automatically provision with OpenVPN access"
+variable "remote_wireguard_port" {
+  description = "The expose port for wireguard on the EC2 instance"
+  default     = "51820"
 }
 
-variable "ovpn_config_directory" {
-  description = "The name of the directory to eventually download the OVPN configuration files to"
-  default     = "generated/ovpn-config"
+variable "local_wireguard_port" {
+  description = "The expose port for wireguard on your machine"
+  default     = "51820"
 }
 
+variable "wireguard_ip_subnet" {
+  description = "IP range for vpn server - make sure your Client ips are in this range but not the specific ip i.e. not .1"
+  default     = "10.8.0.0/24"
+}
+
+variable "wireguard_remote_ip_subnet" {
+  description = "IP range for vpn server - make sure your Client ips are in this range but not the specific ip i.e. not .1"
+  default     = "10.8.0.1/24"
+}
+
+variable "wireguard_local_ip_subnet" {
+  description = "IP range for vpn server - make sure your Client ips are in this range but not the specific ip i.e. not .1"
+  default     = "10.8.0.2/24"
+}
+
+variable "local_wireguard_public_key_file" {
+  # Generate via 'wg genkey | tee settings/wireguard_local | wg pubkey > settings/wireguard_local.pub'
+  description = "The local public key for wireguard config"
+  default     = "settings/wireguard_local.pub"
+}
+
+variable "local_wireguard_private_key_file" {
+  # Generate via 'wg genkey | tee settings/wireguard_local | wg pubkey > settings/wireguard_local.pub'
+  description = "The local private key for wireguard config"
+  default     = "settings/wireguard_local"
+}
+
+variable "remote_wireguard_public_key_file" {
+  # Generate via 'wg genkey | tee settings/wireguard_remote | wg pubkey > settings/wireguard_remote.pub'
+  description = "The remote public key for wireguard config"
+  default     = "settings/wireguard_remote.pub"
+}
+
+variable "remote_wireguard_private_key_file" {
+  # Generate via 'wg genkey | tee settings/wireguard_remote | wg pubkey > settings/wireguard_remote.pub'
+  description = "The remote private key for wireguard config"
+  default     = "settings/wireguard_remote"
+}
+
+variable "wireguard_server_interface" {
+  description = "The default interface to forward network traffic to"
+  default     = "ens5"
+}
+
+variable "wiregaurd_config_name" {
+  description = "The wireguard config name on your machine"
+  default     = "settings/wg0.conf"
+}
+
+variable "local_gateway" {
+  description = "The local gateway if you want to ssh to remote EC2 instance"
+  default     = "192.168.0.1"
+}
+
+variable "dns" {
+  description = "dns"
+  default     = "8.8.8.8"
+}
