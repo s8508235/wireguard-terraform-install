@@ -8,6 +8,6 @@ ListenPort = ${local_port}
 # PostDown = ip route delete ${local_ip} via ${local_gateway}
 [Peer]
 PublicKey = ${remote_public_key}
-AllowedIPs = 0.0.0.0/0
+AllowedIPs = 0.0.0.0/0, ::/0
 # EC2 public IP4 and port 
 Endpoint = ${remote_ip}:${remote_port}
