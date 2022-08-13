@@ -100,7 +100,7 @@ resource "null_resource" "wireguard_bootstrap" {
     agent       = false
   }
   provisioner "file" {
-    content     = local_file.wireguard_remote_file.content
+    content     = data.template_file.remote-config.rendered
     destination = "/tmp/wg0.conf"
   }
 
