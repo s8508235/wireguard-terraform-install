@@ -101,9 +101,8 @@ wireguard up ${CONFIG_FILE}
 
 ## Credits
 
-This repository forked from [dumrauf/openvpn-terraform-install](https://github.com/dumrauf/openvpn-terraform-install),
-use some ideas from [jmhale/terraform-aws-wireguard](https://github.com/jmhale/terraform-aws-wireguard), and
-this [article](https://www.cyberciti.biz/faq/install-set-up-wireguard-on-amazon-linux-2/)
+This repository forked from [dumrauf/openvpn-terraform-install](https://github.com/dumrauf/openvpn-terraform-install), and
+use some ideas from [jmhale/terraform-aws-wireguard](https://github.com/jmhale/terraform-aws-wireguard)
 ## FAQs
 
 Below is a list of frequently asked questions.
@@ -117,3 +116,8 @@ Just re-run the `./terraform-apply.sh` Bash script again with your `<input-file-
 ### Wait — There's a Pint Bounty in the Code?!
 
 Yes. Find it. Solve it. Bag your reward. I'm looking forward to your solutions! Teach me something new!
+
+### Reference
+- https://www.cyberciti.biz/faq/install-set-up-wireguard-on-amazon-linux-2/
+- https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-22-04
+- https://medium.com/@mattias.holmlund/setting-up-ipv6-on-amazon-with-terraform-e14b3bfef577

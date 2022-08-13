@@ -11,5 +11,9 @@ output "connection_string" {
 }
 
 output "start_vpn_command" {
-  value = "wg-quick up ${var.wiregaurd_config_name}"
+  value = "wg-quick up ${var.wiregaurd_config_name} or C:\\Program Files\\WireGuard\\wireguard.exe /installtunnelservice ${var.wiregaurd_config_name}"
+}
+
+output "end_vpn_command" {
+  value = "wg-quick down ${var.wiregaurd_config_name} or C:\\Program Files\\WireGuard\\wireguard.exe /uninstalltunnelservice ${var.wiregaurd_config_name}"
 }
