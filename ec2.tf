@@ -117,13 +117,30 @@ resource "null_resource" "wireguard_bootstrap" {
       "sudo /tmp/install.sh",
       "sudo yum install wireguard-dkms wireguard-tools -y",
       "sudo cp /tmp/wg0.conf /etc/wireguard/wg0.conf",
-      "sudo wg-quick up wg0",
+      "sudo /usr/sbin/shutdown -r 1",
     ]
   }
 }
-
+resource "null_resource" "up_wg" {
+  depends_on = [
+    null_resource.wireguard_bootstrap
+  ]
+  connection {
+    type        = "ssh"
+    host        = aws_instance.wireguard.public_ip
+    user        = var.ec2_username
+    port        = "22"
+    private_key = file("${path.module}/${var.ssh_private_key_file}")
+    agent       = false
+  }
+  provisioner "remote-exec" {
+    inline = [
+        "sudo wg-quick up wg0",
+    ]
+  }
+}
 resource "local_file" "wireguard_local_file" {
-  depends_on      = [null_resource.wireguard_bootstrap]
+  depends_on      = [null_resource.up_wg]
   content         = data.template_file.local_config_file.rendered
   filename        = "${path.module}/${var.wiregaurd_config_name}"
   file_permission = "0400"
