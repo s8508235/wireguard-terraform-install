@@ -113,6 +113,7 @@ variable "local_gateway" {
 }
 
 variable "dns" {
+  type        = list(string)
   description = "dns"
-  default     = "8.8.8.8"
+  default     = ["8.8.8.8"]
 }

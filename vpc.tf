@@ -10,6 +10,7 @@ resource "aws_vpc" "wireguard" {
 }
 
 resource "aws_subnet" "wireguard" {
+  availability_zone = "ap-northeast-3a"
   vpc_id     = aws_vpc.wireguard.id
   cidr_block = cidrsubnet(var.cidr_block, 8, 0)
 

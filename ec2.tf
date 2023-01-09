@@ -29,7 +29,7 @@ data "template_file" "remote-config" {
 
   vars = {
     private_key         = file(var.remote_wireguard_private_key_file)
-    dns                 = var.dns
+    dns                 = join(", ", var.dns)
     wg_server_net       = var.wireguard_remote_ip_subnet
     wg_server_port      = var.remote_wireguard_port
     peer                = data.template_file.wg_client_data_json.rendered
@@ -53,7 +53,7 @@ data "template_file" "local_config_file" {
     local_private_key = file(var.local_wireguard_private_key_file)
     wg_subnet         = var.wireguard_local_ip_subnet
     local_port        = var.local_wireguard_port
-    dns               = var.dns
+    dns                 = join(", ", var.dns)
     local_gateway     = var.local_gateway
     local_ip          = local.local_ip_address
     remote_public_key = file(var.remote_wireguard_public_key_file)
@@ -135,7 +135,7 @@ resource "null_resource" "up_wg" {
   }
   provisioner "remote-exec" {
     inline = [
-        "sudo wg-quick up wg0",
+      "sudo wg-quick up wg0",
     ]
   }
 }

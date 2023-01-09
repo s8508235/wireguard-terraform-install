@@ -2,7 +2,7 @@
 PrivateKey = ${local_private_key}
 Address = ${wg_subnet}
 ListenPort = ${local_port}
-# DNS = ${dns}
+DNS = ${dns}
 # if you want to ssh to remote
 # PostUp = ip route add ${local_ip} via ${local_gateway}
 # PostDown = ip route delete ${local_ip} via ${local_gateway}
